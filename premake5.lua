@@ -29,8 +29,8 @@ project "Ash"
     includedirs {
         "%{prj.name}/src",
         "%{prj.name}/lib/spdlog/include",
-        "%{prj.name}/lib/glew-2.1.0/include",
-        "%{prj.name}/lib/SDL2-2.26.3/include",
+        "%{prj.name}/lib/glew/include",
+        "%{prj.name}/lib/sdl/include",
         "%{prj.name}/lib/glm"
     }
 
