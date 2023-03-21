@@ -1,0 +1,15 @@
+[submodule "Ash/spdlog"]
+	path = Ash/lib/spdlog
+	url = https://github.com/gabime/spdlog
+[submodule "Ash/lib/glm"]
+	path = Ash/lib/glm
+	url = https://github.com/g-truc/glm
+[submodule "Ash/lib/sdl"]
+	path = Ash/lib/sdl
+	url = https://github.com/libsdl-org/SDL
+[submodule "Ash/lib/glew"]
+	path = Ash/lib/glew
+	url = https://github.com/nigels-com/glew
+[submodule "Ash/lib/spdlog"]
+	path = Ash/lib/spdlog
+	url = https://github.com/gabime/spdlog
