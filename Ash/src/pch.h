@@ -15,6 +15,9 @@
 #include <unordered_map>
 #include <unordered_set>
 
+// Logging
+#include "core/log.h"
+
 // Platform specific
 #ifdef DUSTY_PLATFORM_WINDOWS
 #include <Windows.h>
