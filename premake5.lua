@@ -29,9 +29,22 @@ project "Ash"
     includedirs {
         "%{prj.name}/src",
         "%{prj.name}/lib/spdlog/include",
-        "%{prj.name}/lib/glew/include",
-        "%{prj.name}/lib/sdl/include",
-        "%{prj.name}/lib/glm"
+        "%{prj.name}/lib/glewComp/include", -- TODO temp compile when creating project instead
+        "%{prj.name}/lib/sdl2/include",     -- TODO same as above comment
+        "%{prj.name}/lib/glm",
+        "%{prj.name}/lib/stb"
+    }
+
+    libdirs {
+        "%{prj.name}/lib/sdl2/lib/x64",
+        "%{prj.name}/lib/glewComp/lib/Release/x64"
+    }
+
+    links {
+        "SDL2",
+        "SDL2main",
+        "glew32",
+        "opengl32"
     }
 
     filter "system:windows" -- windows specific flags

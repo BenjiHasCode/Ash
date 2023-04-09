@@ -13,3 +13,6 @@
 [submodule "Ash/lib/spdlog"]
 	path = Ash/lib/spdlog
 	url = https://github.com/gabime/spdlog
+[submodule "Ash/lib/stb"]
+	path = Ash/lib/stb
+	url = https://github.com/nothings/stb

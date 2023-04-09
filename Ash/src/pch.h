@@ -2,6 +2,8 @@
 
 // Utility
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <memory>
 #include <utility>
 #include <algorithm>
@@ -20,5 +22,5 @@
 
 // Platform specific
 #ifdef DUSTY_PLATFORM_WINDOWS
-#include <Windows.h>
+	#include <Windows.h>
 #endif // DUSTY_PLATFORM_WINDOWS
