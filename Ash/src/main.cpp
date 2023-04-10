@@ -1,9 +1,8 @@
 #include "pch.h"
 #include <SDL.h>
 #include <GL/glew.h> // extension library that allows us to use the latest OpenGL functionality
-// #include <SDL_opengl.h>
-// #include <gl/GLU.h>
-// #include <GL/GL.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 #include <stdio.h>
 #include "Shader.h"
 
@@ -106,28 +105,99 @@ int main(int argc, char* argv[]) {
 
     // Vertices
     float vertices[] = {
-         // positions       // colors
-         0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom right
-        -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // bottom left
-         0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 1.0f  // top
+         // positions           // colors           // texture coords
+         0.5f,  0.5f, 0.0f,     1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
+         0.5f, -0.5f, 0.0f,     0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
+        -0.5f, -0.5f, 0.0f,     0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // bottom left
+        -0.5f,  0.5f, 0.0f,     1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left
+    };
+
+    unsigned int indices[] = {
+        0, 1, 3,    // first triangle
+        1, 2, 3     // second triangle
     };
 
     // initialize buffers
-        // VBO: Vertex Buffer Object , VAO: Vertex Array Object
-    unsigned int VBO, VAO;
+        // VBO: Vertex Buffer Object, VAO: Vertex Array Object, EBO
+    unsigned int VBO, VAO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
         // bind the VAO first, then bind and set vertex buffer(s), and then configure vertex attribute(s)
     glBindVertexArray(VAO);
+
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
         // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
         // color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+        // texture attribute
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+
+    // Texture
+        // opengl expects 0.0 to be bottom of image, but
+        // images usually have 0.0 at the top, so we flip
+        // the image loading
+    stbi_set_flip_vertically_on_load(true);
+    unsigned int texture1, texture2;
+        // texture 1
+            // arguments: amount of textures, array to store textures in (since we only have one we just pass the address)
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1);
+            // set the texture wrapping/filtering options
+            // (on the currently bound texture object)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            // load and generate the texture
+    int width, height, nrChannels;
+    unsigned char* data = stbi_load("texture/container.jpg", &width, &height, &nrChannels, 0);
+    if (data) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+        DUSTY_CORE_ERROR("Failed to load texture");
+            // now that texture is generated we'll free the data
+    stbi_image_free(data);
+        // texture 2
+    glGenTextures(1, &texture2);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+            // set the texture wrapping/filtering options
+            // (on the currently bound texture object)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            // load and generate the texture
+    data = stbi_load("texture/awesomeface.png", &width, &height, &nrChannels, 0);
+    if (data) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+        DUSTY_CORE_ERROR("Failed to load texture");
+    // now that texture is generated we'll free the data
+    stbi_image_free(data);
+
+        // tell OpenGL to which texture unit each shader sampler belongs
+        // to by setting each sampler using glUniform1i. We only have to
+        // set this once, so we can do this before we enter the render loop
+    shader.use();   // we have to activate the shader before we can change the uniforms
+    shader.setInt("texture1", 0);
+    shader.setInt("texture2", 1);
+
+
 
     // rendering loop
     SDL_Event e;
@@ -150,17 +220,21 @@ int main(int argc, char* argv[]) {
             // clear the color buffer
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-            // activate shader program
+
+            // bind textures to the corresponding texture units
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture1);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2);
+
+            // render crate
         shader.use();
-        shader.setFloat("someUniform", 1.0f);
-            // render triangle
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         
         // swap
         SDL_GL_SwapWindow(window);
         //glfwPollEvents();
-        //SDL_Delay(2000);
     }
 
     // Delete our opengl context, destroy our window, and shutdown SDL
