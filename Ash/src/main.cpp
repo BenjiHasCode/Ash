@@ -4,6 +4,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include <stdio.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "Shader.h"
 
 //const int SCREEN_WIDTH = 800;
@@ -45,10 +48,9 @@ int main(int argc, char* argv[]) {
     // Initialize logging
     Dusty::Log::init();
 
-
     // Initialize SDL2
     SDL_Window* window;
-    SDL_GLContext context; // Why is this not a pointer???
+    SDL_GLContext context;
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
         SDLKill("Unable to initialize SDL");
@@ -212,6 +214,7 @@ int main(int argc, char* argv[]) {
                 switch (e.key.keysym.sym) {
                 case SDLK_ESCAPE:
                     running = false;
+                    break;
                 }
             }
         }
@@ -229,6 +232,13 @@ int main(int argc, char* argv[]) {
 
             // render crate
         shader.use();
+                // rotation
+        glm::mat4 trans = glm::mat4(1.0f);
+        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0));
+        trans = glm::rotate(trans, (float)SDL_GetTicks()/1100.0f, glm::vec3(0.0, 0.0, 1.0));
+        unsigned int transformLoc = glGetUniformLocation(shader.ID, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+      
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         
