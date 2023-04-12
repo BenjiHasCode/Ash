@@ -1,6 +1,7 @@
 #pragma once
 #include <pch.h>
 #include <GL/glew.h>
+#include <glm/glm.hpp>
 
 class Shader
 {
@@ -113,7 +114,7 @@ public:
 	}
 
 private:
-void checkCompileErrors(GLuint shader, std::string type) {
+	void checkCompileErrors(GLuint shader, std::string type) {
 		GLint success;
 		const auto bufferSize = 1024;
 		GLchar infoLog[bufferSize];
