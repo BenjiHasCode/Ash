@@ -165,6 +165,15 @@ int main(int argc, char* argv[]) {
         glm::vec3(-1.3f,  1.0f, -1.5f)
     };
 
+    // CAMERA
+    // glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+    // glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+    // glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
+    // glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+    // glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
+    // glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+
+
     // initialize buffers
         // VBO: Vertex Buffer Object, VAO: Vertex Array Object, EBO
     unsigned int VBO, VAO, EBO;
@@ -237,6 +246,11 @@ int main(int argc, char* argv[]) {
     shader.use();   // we have to activate the shader before we can change the uniforms
     shader.setInt("texture1", 0);
     shader.setInt("texture2", 1);
+    // since the projection matrix rarely changes we set it before the loop
+    glm::mat4 projection = glm::mat4(1.0f);
+    projection = glm::perspective(glm::radians(45.0f), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
+    shader.setMat4("projection", projection);
+
 
     // RENDERING LOOP
     SDL_Event e;
@@ -270,13 +284,15 @@ int main(int argc, char* argv[]) {
         // activate shader
         shader.use();
         // transformations
+        const float radius = 10.0f;
+        float camX = sin(SDL_GetTicks() / 1000.0f) * radius;
+        float camZ = cos(SDL_GetTicks() / 1000.0f) * radius;
         glm::mat4 view = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-        glm::mat4 projection = glm::mat4(1.0f);
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-        projection = glm::perspective(glm::radians(45.0f), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
+        view = glm::lookAt(glm::vec3(camX, 0.0f, camZ),
+                           glm::vec3(0.0f, 0.0f, 0.0f),
+                           glm::vec3(0.0f, 1.0f, 0.0f));
         // sent transformation matrices to shader uniforms
         shader.setMat4("view", view);
-        shader.setMat4("projection", projection);
 
         // render crates
         glBindVertexArray(VAO);
