@@ -12,6 +12,23 @@
 //const int SCREEN_WIDTH = 800;
 //const int SCREEN_HEIGHT = 600;
 
+bool RUNNING = true;
+
+// Temp input variables
+bool FORWARD = false;
+bool BACKWARD = false;
+bool LEFT = false;
+bool RIGHT = false;
+
+
+// CAMERA
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+float deltaTime = 0.0f; // Time between current frame and last frame
+float lastFrame = 0.0f; // Time of last frame
+
 void SDLKill(const char* msg) {
     DUSTY_CORE_ERROR(msg);
     DUSTY_CORE_ERROR(SDL_GetError());
@@ -42,6 +59,48 @@ void SDLCleanup(SDL_GLContext context, SDL_Window* window) {
 // TODO find where to use this in SDL2
 void framebufferSizeCallback(SDL_Window* window, int width, int height) {
     glViewport(0, 0, width, height);
+}
+
+void handleInput(SDL_Event* event) {
+    switch (event->type) {
+    case SDL_QUIT:
+        RUNNING = false;
+        break;
+    case SDL_KEYDOWN:
+        switch (event->key.keysym.sym) {
+            case SDLK_ESCAPE:
+                RUNNING = false;
+                break;
+            case SDLK_w:
+                FORWARD = true;
+                break;
+            case SDLK_a:
+                LEFT = true;
+                break;
+            case SDLK_s:
+                BACKWARD = true;
+                break;
+            case SDLK_d:
+                RIGHT = true;
+                break;
+        }
+        break;
+    case SDL_KEYUP:
+        switch (event->key.keysym.sym) {
+            case SDLK_w:
+                FORWARD = false;
+                break;
+            case SDLK_a:
+                LEFT = false;
+                break;
+            case SDLK_s:
+                BACKWARD = false;
+                break;
+            case SDLK_d:
+                RIGHT = false;
+                break;
+        }
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -165,15 +224,6 @@ int main(int argc, char* argv[]) {
         glm::vec3(-1.3f,  1.0f, -1.5f)
     };
 
-    // CAMERA
-    // glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-    // glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-    // glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
-    // glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-    // glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
-    // glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
-
-
     // initialize buffers
         // VBO: Vertex Buffer Object, VAO: Vertex Array Object, EBO
     unsigned int VBO, VAO, EBO;
@@ -254,21 +304,38 @@ int main(int argc, char* argv[]) {
 
     // RENDERING LOOP
     SDL_Event e;
-    bool running = true;
-    while (running) {
+    while (RUNNING) {
+        //process deltaTime (we calculate it in seconds instead of milliseconds)
+        float currentFrame = SDL_GetTicks() / 1000.0f;
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
         // process input
-        while (SDL_PollEvent(&e)) {
-            switch (e.type) {
-            case SDL_QUIT:
-                running = false;
-            case SDL_KEYDOWN:
-                switch (e.key.keysym.sym) {
-                case SDLK_ESCAPE:
-                    running = false;
-                    break;
-                }
-            }
-        }
+        while (SDL_PollEvent(&e))
+            handleInput(&e);
+
+        // movement vector
+        glm::vec3 horizontal = glm::vec3(0.0f, 0.0f, 0.0f);
+        glm::vec3 backForth = glm::vec3(0.0f, 0.0f, 0.0f);
+        glm::vec3 movement;
+
+        const float cameraSpeed = 4.0f * deltaTime; // adjust accordingly
+        if (FORWARD)
+            backForth += cameraFront;
+        if (BACKWARD)
+            backForth -= cameraFront;
+        if (LEFT)
+            horizontal -= glm::normalize(glm::cross(cameraFront, cameraUp));
+        if (RIGHT)
+            horizontal += glm::normalize(glm::cross(cameraFront, cameraUp));
+
+        // normalize result if both vectors are greater than 0
+        if (glm::length(backForth) > 0.0f && glm::length(horizontal) > 0.0f)
+            movement = glm::normalize(backForth + horizontal) * cameraSpeed;
+        else
+            movement = (backForth + horizontal) * cameraSpeed;
+        
+        cameraPos += movement;
 
         // render
             // clear the color buffer
@@ -288,9 +355,7 @@ int main(int argc, char* argv[]) {
         float camX = sin(SDL_GetTicks() / 1000.0f) * radius;
         float camZ = cos(SDL_GetTicks() / 1000.0f) * radius;
         glm::mat4 view = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-        view = glm::lookAt(glm::vec3(camX, 0.0f, camZ),
-                           glm::vec3(0.0f, 0.0f, 0.0f),
-                           glm::vec3(0.0f, 1.0f, 0.0f));
+        view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
         // sent transformation matrices to shader uniforms
         shader.setMat4("view", view);
 
