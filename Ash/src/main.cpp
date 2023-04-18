@@ -24,9 +24,8 @@ bool RIGHT = false;*/
 
 // CAMERA
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-float lastX, lastY; //TODO does 0 create bugs?
 
-
+// TIME
 float deltaTime = 0.0f; // Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
@@ -109,18 +108,13 @@ void handleKeyboardInput(SDL_Event* event) {
 void handleMouseInput(SDL_Event* event) {
     switch (event->type) {
     case SDL_MOUSEMOTION:
-        // TODO what are these even used for???
-        lastX += event->motion.xrel;
-        lastY += event->motion.yrel;
-
-        camera.ProcessMouseMovement(event->motion.xrel, -event->motion.xrel);
+        camera.ProcessMouseMovement(event->motion.xrel, -event->motion.yrel);
         break;
     case SDL_MOUSEBUTTONDOWN:
         break;
     case SDL_MOUSEBUTTONUP:
         break;
     case SDL_MOUSEWHEEL:
-        // TODO make sure this works
         camera.ProcessMouseScroll(static_cast<float>(event->wheel.y));
         break;
     }
@@ -169,9 +163,6 @@ int main(int argc, char* argv[]) {
     const auto ASPECT_RATIO = 4.0 / 3.0;
     const auto SCREEN_HEIGHT = DM.h * 0.8;
     const auto SCREEN_WIDTH = SCREEN_HEIGHT * ASPECT_RATIO;
-
-    lastX = SCREEN_WIDTH * 0.5;
-    lastY = SCREEN_HEIGHT * 0.5;
 
     // Create window centered at specified resolution
     window = SDL_CreateWindow(
