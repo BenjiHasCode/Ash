@@ -7,7 +7,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include "Shader.h"
+#include "shader.h"
+#include "camera.h"
 
 //const int SCREEN_WIDTH = 800;
 //const int SCREEN_HEIGHT = 600;
@@ -15,16 +16,16 @@
 bool RUNNING = true;
 
 // Temp input variables
-bool FORWARD = false;
+/*bool FORWARD = false;
 bool BACKWARD = false;
 bool LEFT = false;
-bool RIGHT = false;
+bool RIGHT = false;*/
 
 
 // CAMERA
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+float lastX, lastY; //TODO does 0 create bugs?
+
 
 float deltaTime = 0.0f; // Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
@@ -61,45 +62,85 @@ void framebufferSizeCallback(SDL_Window* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
+void handleKeyboardInput(SDL_Event* event) {
+    switch (event->type) {
+    case SDL_KEYDOWN:
+        switch (event->key.keysym.sym) {
+        case SDLK_ESCAPE:
+            RUNNING = false;
+            break;
+        case SDLK_w:
+            // TEMP
+            camera.ProcessKeyboard(Movement::FORWARD, deltaTime);
+   //         FORWARD = true;
+            break;
+        case SDLK_a:
+            camera.ProcessKeyboard(Movement::LEFT, deltaTime);
+   //         LEFT = true;
+            break;
+        case SDLK_s:
+            camera.ProcessKeyboard(Movement::BACKWARD, deltaTime);
+   //         BACKWARD = true;
+            break;
+        case SDLK_d:
+            camera.ProcessKeyboard(Movement::RIGHT, deltaTime);
+   //         RIGHT = true;
+            break;
+        }
+        break;
+ /* case SDL_KEYUP:
+        switch (event->key.keysym.sym) {
+        case SDLK_w:
+            FORWARD = false;
+            break;
+        case SDLK_a:
+            LEFT = false;
+            break;
+        case SDLK_s:
+            BACKWARD = false;
+            break;
+        case SDLK_d:
+            RIGHT = false;
+            break;
+        }*/
+    }
+}
+
+void handleMouseInput(SDL_Event* event) {
+    switch (event->type) {
+    case SDL_MOUSEMOTION:
+        // TODO what are these even used for???
+        lastX += event->motion.xrel;
+        lastY += event->motion.yrel;
+
+        camera.ProcessMouseMovement(event->motion.xrel, -event->motion.xrel);
+        break;
+    case SDL_MOUSEBUTTONDOWN:
+        break;
+    case SDL_MOUSEBUTTONUP:
+        break;
+    case SDL_MOUSEWHEEL:
+        // TODO make sure this works
+        camera.ProcessMouseScroll(static_cast<float>(event->wheel.y));
+        break;
+    }
+}
+
 void handleInput(SDL_Event* event) {
     switch (event->type) {
     case SDL_QUIT:
         RUNNING = false;
         break;
     case SDL_KEYDOWN:
-        switch (event->key.keysym.sym) {
-            case SDLK_ESCAPE:
-                RUNNING = false;
-                break;
-            case SDLK_w:
-                FORWARD = true;
-                break;
-            case SDLK_a:
-                LEFT = true;
-                break;
-            case SDLK_s:
-                BACKWARD = true;
-                break;
-            case SDLK_d:
-                RIGHT = true;
-                break;
-        }
-        break;
     case SDL_KEYUP:
-        switch (event->key.keysym.sym) {
-            case SDLK_w:
-                FORWARD = false;
-                break;
-            case SDLK_a:
-                LEFT = false;
-                break;
-            case SDLK_s:
-                BACKWARD = false;
-                break;
-            case SDLK_d:
-                RIGHT = false;
-                break;
-        }
+        handleKeyboardInput(event);
+        break;
+    case SDL_MOUSEMOTION:
+    case SDL_MOUSEBUTTONDOWN:
+    case SDL_MOUSEBUTTONUP:
+    case SDL_MOUSEWHEEL:
+        handleMouseInput(event);
+        break;
     }
 }
 
@@ -114,11 +155,13 @@ int main(int argc, char* argv[]) {
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
         SDLKill("Unable to initialize SDL");
 
-    // Request opengl 3.3 context
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    // Request opengl context
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
         SDL_GL_CONTEXT_PROFILE_CORE);
+
+    SDL_SetRelativeMouseMode(SDL_TRUE);
 
     // base window size on systems current resolution instead of hardcoded value
     SDL_DisplayMode DM;
@@ -126,6 +169,9 @@ int main(int argc, char* argv[]) {
     const auto ASPECT_RATIO = 4.0 / 3.0;
     const auto SCREEN_HEIGHT = DM.h * 0.8;
     const auto SCREEN_WIDTH = SCREEN_HEIGHT * ASPECT_RATIO;
+
+    lastX = SCREEN_WIDTH * 0.5;
+    lastY = SCREEN_HEIGHT * 0.5;
 
     // Create window centered at specified resolution
     window = SDL_CreateWindow(
@@ -296,12 +342,7 @@ int main(int argc, char* argv[]) {
     shader.use();   // we have to activate the shader before we can change the uniforms
     shader.setInt("texture1", 0);
     shader.setInt("texture2", 1);
-    // since the projection matrix rarely changes we set it before the loop
-    glm::mat4 projection = glm::mat4(1.0f);
-    projection = glm::perspective(glm::radians(45.0f), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
-    shader.setMat4("projection", projection);
-
-
+    
     // RENDERING LOOP
     SDL_Event e;
     while (RUNNING) {
@@ -315,10 +356,11 @@ int main(int argc, char* argv[]) {
             handleInput(&e);
 
         // movement vector
-        glm::vec3 horizontal = glm::vec3(0.0f, 0.0f, 0.0f);
+        /*glm::vec3 horizontal = glm::vec3(0.0f, 0.0f, 0.0f);
         glm::vec3 backForth = glm::vec3(0.0f, 0.0f, 0.0f);
         glm::vec3 movement;
 
+        
         const float cameraSpeed = 4.0f * deltaTime; // adjust accordingly
         if (FORWARD)
             backForth += cameraFront;
@@ -335,7 +377,7 @@ int main(int argc, char* argv[]) {
         else
             movement = (backForth + horizontal) * cameraSpeed;
         
-        cameraPos += movement;
+        cameraPos += movement;*/
 
         // render
             // clear the color buffer
@@ -350,12 +392,15 @@ int main(int argc, char* argv[]) {
 
         // activate shader
         shader.use();
-        // transformations
-        const float radius = 10.0f;
-        float camX = sin(SDL_GetTicks() / 1000.0f) * radius;
-        float camZ = cos(SDL_GetTicks() / 1000.0f) * radius;
-        glm::mat4 view = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-        view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+
+        // projection
+        // since the projection matrix rarely changes we set it before the loop
+        glm::mat4 projection = glm::mat4(1.0f);
+        projection = glm::perspective(glm::radians(camera.Zoom), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
+        shader.setMat4("projection", projection);
+
+        // camera/view transformation
+        glm::mat4 view = camera.GetViewMatrix();
         // sent transformation matrices to shader uniforms
         shader.setMat4("view", view);
 
