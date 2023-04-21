@@ -22,8 +22,13 @@ glm::mat4 Camera::GetViewMatrix() {
 	return glm::lookAt(Position, Position + Front, Up);
 }
 
-// TODO find better alternative. Diagonal will make camera faster
-void Camera::ProcessKeyboard(Movement direction, float deltaTime) {
+void Camera::move(glm::vec3 moveVector, float deltaTime) {
+	const float velocity = MovementSpeed * deltaTime;
+	Position += moveVector * velocity;
+}
+
+// TODO find better alternative. Diagonal will make camera move faster
+/*void Camera::ProcessKeyboard(Movement direction, float deltaTime) {
 	float velocity = MovementSpeed * deltaTime;
 	if (direction == FORWARD)
 		Position += Front * velocity;
@@ -33,7 +38,7 @@ void Camera::ProcessKeyboard(Movement direction, float deltaTime) {
 		Position -= Right * velocity;
 	if (direction == RIGHT)
 		Position += Right * velocity;
-}
+}*/
 
 void Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch) {
 	xoffset *= MouseSensitivity;

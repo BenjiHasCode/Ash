@@ -45,6 +45,9 @@ public:
 	// returns the view matrix calculated using Euler Angles and the LookAt Matrix
 	glm::mat4 GetViewMatrix();
 
+	// moves the vector based on a movement vector and deltatime
+	void move(glm::vec3 moveVector, float deltaTime);
+
 	// processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing system)
 	void ProcessKeyboard(Movement direction, float deltaTime);
 

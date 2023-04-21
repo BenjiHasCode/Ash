@@ -10,16 +10,13 @@
 #include "shader.h"
 #include "camera.h"
 
-//const int SCREEN_WIDTH = 800;
-//const int SCREEN_HEIGHT = 600;
-
 bool RUNNING = true;
 
 // Temp input variables
-/*bool FORWARD = false;
-bool BACKWARD = false;
-bool LEFT = false;
-bool RIGHT = false;*/
+bool forward = false;
+bool backward = false;
+bool left = false;
+bool right = false;
 
 
 // CAMERA
@@ -70,38 +67,38 @@ void handleKeyboardInput(SDL_Event* event) {
             break;
         case SDLK_w:
             // TEMP
-            camera.ProcessKeyboard(Movement::FORWARD, deltaTime);
-   //         FORWARD = true;
+   //         camera.ProcessKeyboard(Movement::FORWARD, deltaTime);
+            forward = true;
             break;
         case SDLK_a:
-            camera.ProcessKeyboard(Movement::LEFT, deltaTime);
-   //         LEFT = true;
+   //         camera.ProcessKeyboard(Movement::LEFT, deltaTime);
+            left = true;
             break;
         case SDLK_s:
-            camera.ProcessKeyboard(Movement::BACKWARD, deltaTime);
-   //         BACKWARD = true;
+   //         camera.ProcessKeyboard(Movement::BACKWARD, deltaTime);
+            backward = true;
             break;
         case SDLK_d:
-            camera.ProcessKeyboard(Movement::RIGHT, deltaTime);
-   //         RIGHT = true;
+   //         camera.ProcessKeyboard(Movement::RIGHT, deltaTime);
+            right = true;
             break;
         }
         break;
- /* case SDL_KEYUP:
+    case SDL_KEYUP:
         switch (event->key.keysym.sym) {
         case SDLK_w:
-            FORWARD = false;
+            forward = false;
             break;
         case SDLK_a:
-            LEFT = false;
+            left = false;
             break;
         case SDLK_s:
-            BACKWARD = false;
+            backward = false;
             break;
         case SDLK_d:
-            RIGHT = false;
+            right = false;
             break;
-        }*/
+        }
     }
 }
 
@@ -347,28 +344,40 @@ int main(int argc, char* argv[]) {
             handleInput(&e);
 
         // movement vector
-        /*glm::vec3 horizontal = glm::vec3(0.0f, 0.0f, 0.0f);
+        glm::vec3 horizontal = glm::vec3(0.0f, 0.0f, 0.0f);
         glm::vec3 backForth = glm::vec3(0.0f, 0.0f, 0.0f);
         glm::vec3 movement;
 
-        
-        const float cameraSpeed = 4.0f * deltaTime; // adjust accordingly
-        if (FORWARD)
-            backForth += cameraFront;
-        if (BACKWARD)
-            backForth -= cameraFront;
-        if (LEFT)
-            horizontal -= glm::normalize(glm::cross(cameraFront, cameraUp));
-        if (RIGHT)
-            horizontal += glm::normalize(glm::cross(cameraFront, cameraUp));
+        if (forward)
+            backForth += camera.Front;
+        if (backward)
+            backForth -= camera.Front;
+        if (left)
+            horizontal -= camera.Right;
+        if (right)
+            horizontal += camera.Right;
 
         // normalize result if both vectors are greater than 0
         if (glm::length(backForth) > 0.0f && glm::length(horizontal) > 0.0f)
-            movement = glm::normalize(backForth + horizontal) * cameraSpeed;
+            movement = glm::normalize(backForth + horizontal);
         else
-            movement = (backForth + horizontal) * cameraSpeed;
+            movement = backForth + horizontal;
         
-        cameraPos += movement;*/
+        if (glm::length(movement) != 0) {
+            std::cout << "X: " << movement.x << ", Y: " << movement.y << ", Z: " << movement.z << "\n";
+        }
+        camera.move(movement, deltaTime);
+
+        /////////////////////////////////////////
+       // if (direction == FORWARD)
+        //    Position += Front * velocity;
+       // if (direction == BACKWARD)
+       //     Position -= Front * velocity;
+       // if (direction == LEFT)
+       //     Position -= Right * velocity;
+       // if (direction == RIGHT)
+       //     Position += Right * velocity;
+        //////////////////////////////////////////
 
         // render
             // clear the color buffer
