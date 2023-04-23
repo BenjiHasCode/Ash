@@ -303,25 +303,22 @@ int main(int argc, char* argv[]) {
             handleInput(&e);
 
         // movement vector
-        glm::vec3 horizontal = glm::vec3(0.0f, 0.0f, 0.0f);
-        glm::vec3 backForth = glm::vec3(0.0f, 0.0f, 0.0f);
-        glm::vec3 movement;
-
-        if (forward)
-            backForth += camera.Front;
-        else if (backward)
-            backForth -= camera.Front;
-        if (left)
-            horizontal -= camera.Right;
-        else if (right)
-            horizontal += camera.Right;
-
-        // normalize result if both vectors are greater than 0
-        if (glm::length(backForth) > 0.0f && glm::length(horizontal) > 0.0f)
-            movement = glm::normalize(backForth + horizontal);
-        else
-            movement = backForth + horizontal;
+        glm::vec3 movement = glm::vec3(0.0f, 0.0f, 0.0f);
         
+        if (forward)
+            movement += camera.Front;
+        else if (backward)
+            movement -= camera.Front;
+        if (left)
+            movement -= camera.Right;
+        else if (right)
+            movement += camera.Right;
+
+        // if two inputs results in a diagonal movement then the length is longer than 1
+        // so we normalize the result so that the diagonal speed is equalt to the other planes
+        if (glm::length(movement) > 1.0f)
+            movement = glm::normalize(movement);
+
         camera.move(movement, deltaTime);
 
         // render
