@@ -276,6 +276,16 @@ int main(int argc, char* argv[]) {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
+    // set cube material
+    lightingShader.use();
+        // mat
+    lightingShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
+    lightingShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
+    lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+    lightingShader.setFloat("material.shininess", 32.0f);
+        //light
+    lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+
     
     // RENDERING LOOP
     SDL_Event e;
@@ -308,6 +318,16 @@ int main(int argc, char* argv[]) {
 
         camera.move(movement, deltaTime);
 
+
+        // lightColor
+        glm::vec3 lightColor;
+        lightColor.x = sin(SDL_GetTicks() / 1000.0f * 2.0f);
+        lightColor.y = sin(SDL_GetTicks() / 1000.0f * 0.7f);
+        lightColor.z = sin(SDL_GetTicks() / 1000.0f * 1.3f);
+
+        glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
+        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f);
+
         // render
             // clear the color buffer
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -319,7 +339,8 @@ int main(int argc, char* argv[]) {
         lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
         lightingShader.setVec3("lightPos", lightPos);
         lightingShader.setVec3("viewPos", camera.Position);
-
+        lightingShader.setVec3("light.ambient", ambientColor);
+        lightingShader.setVec3("light.diffuse", diffuseColor);
 
         // view/projection transformation
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
